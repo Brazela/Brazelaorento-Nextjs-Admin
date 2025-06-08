@@ -34,6 +34,7 @@ const session = cookieStore.get('session')?.value;
       email: parsed.email || null
     };
   } catch (error) {
-    return { userId: null, username: null };
-  }
+  console.error('Session parsing error:', error);
+  return { userId: null, username: null, email: null };
+}
 }
