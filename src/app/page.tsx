@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/session';
+import { getSession } from '@/app/lib/session';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
