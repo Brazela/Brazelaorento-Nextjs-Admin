@@ -24,7 +24,7 @@ export default async function AdminPage() {
               Welcome, {session.username}!
             </h2>
             <p className="text-gray-600 mt-2">
-              Youre logged in as {session.email}
+              You're logged in as {session.email}
             </p>
             <div className="mt-6 bg-green-100 text-green-800 p-3 rounded-md">
               Cross-subdomain authentication successful!
