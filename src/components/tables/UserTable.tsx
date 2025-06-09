@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import DataTable from './DataTable';
 import {Modal}  from '../ui/modals';
-import  Button from '../ui/button';
+import  Button from '../ui/buttons';
 import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
 interface UserDropdownProps {
   currentUser: {
