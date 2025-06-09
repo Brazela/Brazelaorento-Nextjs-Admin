@@ -1,39 +1,61 @@
-"use client";
+// app/admin/layout-wrapper.tsx
+import { cookies } from 'next/headers';
+import { db } from '@/db/index';
+import { usersTable, sessions } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
+import AdminLayoutClient from './layout-client';
+import { SidebarProvider } from '@/context/SidebarContext'; // ✅ Import this
+import { ThemeProvider } from '@/context/ThemeContext';
+import RemoveRadixPortal from '@/components/RemoveRadixPortal';
+import { Metadata } from 'next';
 
-import { useSidebar } from "@/context/SidebarContext";
-import AppHeader from "@/layout/AppHeader";
-import AppSidebar from "@/layout/AppSidebar";
-import Backdrop from "@/layout/Backdrop";
-import React from "react";
+export const metadata: Metadata = {
+  title: "Admin | Brazelaorento",
+  description: "This is Admin Home for Brazelaorento website",
+};
 
-export default function AdminLayout({
+export default async function AdminLayoutWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const sessionCookie = (await cookies()).get('session')?.value;
+  if (typeof sessionCookie !== 'string') {
+    redirect('https://main.brazelaorento.link');
+  }
 
-  // Dynamic class for main content margin based on sidebar state
-  const mainContentMargin = isMobileOpen
-    ? "ml-0"
-    : isExpanded || isHovered
-    ? "lg:ml-[290px]"
-    : "lg:ml-[90px]";
+  try {
+    const parsed = JSON.parse(sessionCookie);
+    const result = await db
+      .select({
+        id: usersTable.id,
+        username: usersTable.username,
+        email: usersTable.email,
+        profilePicture: usersTable.profilePicture,
+        permission: usersTable.permission,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, parsed.userId))
+      .limit(1);
 
-  return (
-    <div className="min-h-screen xl:flex">
-      {/* Sidebar and Backdrop */}
-      <AppSidebar />
-      <Backdrop />
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 transition-all  duration-300 ease-in-out ${mainContentMargin}`}
-      >
-        {/* Header */}
-        <AppHeader />
-        {/* Page Content */}
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">{children}</div>
-      </div>
-    </div>
-  );
+    if (result.length === 0 || !['Admin', 'Owner'].includes(result[0].permission)) {
+      redirect('https://main.brazelaorento.link');
+    }
+
+   return (
+  <ThemeProvider>
+    <SidebarProvider>
+      <RemoveRadixPortal>
+        <AdminLayoutClient user={result[0]}>
+          {children}
+        </AdminLayoutClient>
+      </RemoveRadixPortal>
+    </SidebarProvider>
+  </ThemeProvider>
+);
+  } catch (error) {
+    console.error('Database query error:', error);
+     redirect('https://main.brazelaorento.link');
+  }
 }

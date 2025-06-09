@@ -10,7 +10,51 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function StatisticsChart() {
+interface MonthlyData {
+  month: string;
+  year: string;
+  count: number;
+}
+
+export default function StatisticsChart({
+  userData,
+  productData
+}: {
+  userData: MonthlyData[];
+  productData: MonthlyData[];
+}) {
+   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
+  // Get last 12 months
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return {
+      month: date.getMonth(),
+      year: date.getFullYear()
+    };
+  }).reverse();
+
+   // Prepare series data
+  const userSeriesData = months.map(m => {
+    const data = userData.find(
+      d => parseInt(d.month) === m.month + 1 && parseInt(d.year) === m.year
+    );
+    return data ? data.count : 0;
+  });
+  
+  const productSeriesData = months.map(m => {
+    const data = productData.find(
+      d => parseInt(d.month) === m.month + 1 && parseInt(d.year) === m.year
+    );
+    return data ? data.count : 0;
+  });
+  
+  // Format x-axis labels
+  const categories = months.map(m => {
+    return `${monthNames[m.month]} ${m.year.toString().slice(2)}`;
+  });
+
   const options: ApexOptions = {
     legend: {
       show: false, // Hide legend
@@ -69,20 +113,7 @@ export default function StatisticsChart() {
     },
     xaxis: {
       type: "category", // Category-based x-axis
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories,
       axisBorder: {
         show: false, // Hide x-axis border
       },
@@ -111,13 +142,13 @@ export default function StatisticsChart() {
 
   const series = [
     {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+      name: "Users",
+      data: userSeriesData
     },
     {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
+      name: "Products",
+      data: productSeriesData
+    }
   ];
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
@@ -126,13 +157,9 @@ export default function StatisticsChart() {
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Statistics
           </h3>
-          <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Target you’ve set for each month
-          </p>
+        
         </div>
-        <div className="flex items-start w-full gap-3 sm:justify-end">
-          <ChartTab />
-        </div>
+       
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
