@@ -130,7 +130,7 @@ const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaEl
     
     if (!formData.product_name) errors.product_name = 'Product name is required';
     if (!formData.product_desc) errors.product_desc = 'Description is required';
-    if (formData.price <= 0) errors.price = 'Price must be greater than 0';
+    // if (formData.price <= 0) errors.price = 'Price must be greater than 0';
     if (!formData.category_name) errors.category_name = 'Category is required';
     if (!formData.link) errors.link = 'Link is required';
     if (!formData.button_name) errors.button_name = 'Button text is required';
