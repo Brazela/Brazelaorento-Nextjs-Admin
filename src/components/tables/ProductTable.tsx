@@ -11,11 +11,12 @@ import { FaImage } from 'react-icons/fa';
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
 // components/tables/AdminProductTable.tsx
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import DataTable from './DataTable';
 import {Modal} from '../ui/modals';
 import Button from '../ui/buttons';
-import { FaEye, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaPlus, FaDownload } from 'react-icons/fa';
+import { exportUsersToPDF, exportUsersToExcel } from '../utils/exportUtils';
 
 interface UserDropdownProps {
   currentUser: {
@@ -68,6 +69,11 @@ const [imagePreview, setImagePreview] = useState<string | null>(null);
     button_name: '',
   });
 
+  const [productsData, setProductsData] = useState<ProductRow[]>([]); // For export
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const downloadRef = useRef<HTMLDivElement>(null);
+  const [visibleProducts, setVisibleProducts] = useState<ProductRow[]>([]); // For export (current page/filter)
+
   const handleView = (product: ProductRow) => {
     setSelectedProduct(product);
     setIsViewModalOpen(true);
@@ -105,8 +111,6 @@ const [imagePreview, setImagePreview] = useState<string | null>(null);
     setFormErrors({});
   };
   
-  
-
   const confirmDelete = async () => {
     await fetch('/api/admin/products', {
       method: 'DELETE',
@@ -287,18 +291,48 @@ const productActions = (row: ProductRow, currentUser: UserDropdownProps['current
   
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button onClick={handleAdd} className="flex items-center">
-          <FaPlus className="mr-2" /> Add Product
-        </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+        <div></div>
+        <div className="relative w-full sm:w-auto flex justify-start" ref={downloadRef}>
+          <button
+            className="flex items-center w-full sm:w-auto px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 focus:outline-none justify-center"
+            onClick={() => setDownloadOpen((v) => !v)}
+          >
+            <FaDownload className="mr-2" /> Download
+          </button>
+          {downloadOpen && (
+            <div className="absolute left-0 sm:left-auto sm:right-0 mt-12 w-full sm:w-48 bg-white border rounded shadow-lg z-20 min-w-[180px]">
+              <button
+                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  exportUsersToPDF(visibleProducts, 'product');
+                  setDownloadOpen(false);
+                }}
+              >
+                <FaDownload className="text-cyan-600" />
+                <span>Download as PDF</span>
+              </button>
+              <button
+                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  exportUsersToExcel(visibleProducts, 'product');
+                  setDownloadOpen(false);
+                }}
+              >
+                <FaDownload className="text-green-600" />
+                <span>Download as Excel</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      
       <DataTable
         columns={productColumns}
         dataUrl="/api/admin/products"
         actions={productActions}
         currentUser={currentUser}
-          refreshKey={refreshKey}
+        refreshKey={refreshKey}
+        onDataChange={setVisibleProducts}
       />
 
       {/* View Product Modal */}

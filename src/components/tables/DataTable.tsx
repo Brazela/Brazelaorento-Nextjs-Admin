@@ -11,7 +11,8 @@ interface DataTableProps {
   dataUrl: string;
   actions: (row: any, currentUser: any) => React.ReactNode;
   currentUser: any;
-    refreshKey?: number;
+  refreshKey?: number;
+  onDataChange?: (data: any[]) => void; // Add this prop
 }
 
 const DataTable: React.FC<DataTableProps> = ({ 
@@ -19,13 +20,14 @@ const DataTable: React.FC<DataTableProps> = ({
   dataUrl, 
   actions,
   currentUser,
-   refreshKey = 0, // default 0
+  refreshKey = 0, // default 0
+  onDataChange,
 }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(5);
   const [search, setSearch] = useState('');
 
   const fetchData = async () => {
@@ -34,13 +36,12 @@ const DataTable: React.FC<DataTableProps> = ({
       const res = await fetch(
         `${dataUrl}?page=${currentPage}&limit=${limit}&search=${search}`
       );
-     const response = await res.json();
-const dataArray = response.products || response.users || [];
-const totalItems = response.total || 0;
-
-setData(dataArray);
-setTotalPages(Math.ceil(totalItems / limit));
-
+      const response = await res.json();
+      const dataArray = response.products || response.users || [];
+      const totalItems = response.total || 0;
+      setData(dataArray);
+      setTotalPages(Math.ceil(totalItems / limit));
+      if (onDataChange) onDataChange(dataArray); // Notify parent
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -70,9 +71,10 @@ setTotalPages(Math.ceil(totalItems / limit));
 
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-      <div className="flex justify-between p-4">
-        <div className="relative w-64">
+     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+      {/* Responsive controls */}
+      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-64">
           <input
             type="text"
             placeholder="Search..."
@@ -89,11 +91,11 @@ setTotalPages(Math.ceil(totalItems / limit));
             <path strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <select
             value={limit}
             onChange={handleLimitChange}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="w-full sm:w-auto rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           >
             <option value={5}>5 per page</option>
             <option value={10}>10 per page</option>
@@ -102,7 +104,6 @@ setTotalPages(Math.ceil(totalItems / limit));
           </select>
         </div>
       </div>
-
       <div className="max-w-full overflow-x-auto">
         <table className="w-full">
           <thead className="border-b border-gray-100 dark:border-white/[0.05]">

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -17,12 +17,14 @@ import {
   TableIcon,
   UserCircleIcon,
 } from "../icons/index";
+import SendEmailModal from '../components/ui/modals/SendEmailModal';
 
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
+  onClick?: () => void;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
@@ -116,8 +118,7 @@ interface AppHeaderProps {
 const AppSidebar: React.FC<AppHeaderProps> = ({ user }) => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-
-
+  const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false);
 
   const renderMenuItems = (
     navItems: NavItem[],
@@ -163,7 +164,7 @@ const AppSidebar: React.FC<AppHeaderProps> = ({ user }) => {
               )}
             </button>
           ) : (
-            nav.path && (
+            nav.path ? (
               <Link
                 href={nav.path}
                 className={`menu-item group ${
@@ -171,7 +172,7 @@ const AppSidebar: React.FC<AppHeaderProps> = ({ user }) => {
                 }`}
               >
                 <span
-                  className={`${
+                  className={`$${
                     isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
@@ -183,7 +184,18 @@ const AppSidebar: React.FC<AppHeaderProps> = ({ user }) => {
                   <span className={`menu-item-text`}>{nav.name}</span>
                 )}
               </Link>
-            )
+            ) : nav.onClick ? (
+              <button
+                type="button"
+                onClick={nav.onClick}
+                className={`menu-item group menu-item-inactive`}
+              >
+                <span className="menu-item-icon-inactive">{nav.icon}</span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className={`menu-item-text`}>{nav.name}</span>
+                )}
+              </button>
+            ) : null
           )}
           {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
             <div
@@ -250,7 +262,7 @@ if (user && user.permission === "Owner") {
   othersItems.push({
     icon: <PlugInIcon />,
     name: "Send Email",
-    path: "/calendar",
+    path: "/admin/sendemail",
   });
 }
 
@@ -406,6 +418,8 @@ if (user && user.permission === "Owner") {
         </nav>
        
       </div>
+      {/* <SendEmailModal isOpen={isSendEmailModalOpen} onClose={() => setIsSendEmailModalOpen(false)} /> */}
+      <SendEmailModal isOpen={isSendEmailModalOpen} onClose={() => setIsSendEmailModalOpen(false)} />
     </aside>
   );
 };
