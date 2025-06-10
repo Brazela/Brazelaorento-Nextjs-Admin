@@ -128,3 +128,16 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+src/components/user-profile/UserMetaCard.tsx
+src/components/user-profile/UserAddressCard.tsx
+src/components/user-profile/UserInfoCard.tsx
+src/components/example/ModalExample/VerticallyCenteredModal.tsx
+src/components/example/ModalExample/FullScreenModal.tsx
+src/components/example/ModalExample/FormInModal.tsx
+src/components/example/ModalExample/DefaultModal.tsx
+src/components/auth/SignUpForm.tsx
+src/components/auth/SignInForm.tsx
+src/components/example/ModalExample/DefaultModal.tsx
+src/app/(full-width-pages)/(auth)/signup/page.tsx
+src/app/(full-width-pages)/(auth)/signin/page.tsx
+src/components/example/ModalExample/VerticallyCenteredModal.tsx

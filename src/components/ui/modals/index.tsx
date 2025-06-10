@@ -59,10 +59,11 @@ export const Modal: React.FC<ModalProps> = ({
 
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : `relative w-full ${sizeClass} max-h-[90vh] mx-auto rounded-3xl bg-white dark:bg-gray-900 shadow-lg overflow-y-auto`;
+    : `relative w-full ${sizeClass} max-h-[90vh] mx-auto rounded-3xl bg-white dark:bg-gray-900 shadow-lg overflow-y-auto overflow-x-hidden`
+
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-400/50 backdrop-blur-[32px] px-4">
+<div className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-400/50 backdrop-blur-[32px] px-4 overflow-x-hidden">
       <div
         ref={modalRef}
         className={`${contentClasses} ${className}`}
@@ -101,7 +102,7 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 break-words whitespace-normal">{children}</div>
       </div>
     </div>
   );

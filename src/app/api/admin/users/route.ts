@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
       email: usersTable.email,
       profilePicture: usersTable.profilePicture,
       permission: usersTable.permission,
+      verificationCode: usersTable.verificationCode,
+       resetPassCode: usersTable.resetPassCode,
     })
     .from(usersTable)
     .where(whereClause)

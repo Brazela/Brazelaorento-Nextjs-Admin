@@ -5,6 +5,10 @@ import DataTable from './DataTable';
 import {Modal}  from '../ui/modals';
 import  Button from '../ui/buttons';
 import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
+
+
 interface UserDropdownProps {
   currentUser: {
    id: number;
@@ -28,11 +32,15 @@ interface UserRow {
 }
 
 const AdminUserTable: React.FC<UserDropdownProps> = ({ currentUser }) => {
+  
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [permission, setPermission] = useState('Guest');
+const router = useRouter();
+
 
   useEffect(() => {
     console.log("Current User Permission:", currentUser?.permission);
@@ -62,6 +70,8 @@ const AdminUserTable: React.FC<UserDropdownProps> = ({ currentUser }) => {
     });
     setIsDeleteModalOpen(false);
     // Refresh data
+     setRefreshKey((prev) => prev + 1); // trigger table refresh
+
   };
 
   const updatePermission = async () => {
@@ -72,6 +82,8 @@ const AdminUserTable: React.FC<UserDropdownProps> = ({ currentUser }) => {
     });
     setIsEditModalOpen(false);
     // Refresh data
+      setRefreshKey((prev) => prev + 1); // trigger table refresh
+
   };
 
   const userColumns = [
@@ -92,7 +104,10 @@ const AdminUserTable: React.FC<UserDropdownProps> = ({ currentUser }) => {
     { header: 'Permission', accessor: 'permission' },
   ];
 
-const userActions = (row: UserRow, currentUser: UserDropdownProps['currentUser']) => (
+const userActions = (row: UserRow, currentUser: UserDropdownProps['currentUser']) => {
+  const isSelf = currentUser?.id === row.id;
+
+  return (
     <>
       <button 
         onClick={() => handleView(row)}
@@ -100,8 +115,9 @@ const userActions = (row: UserRow, currentUser: UserDropdownProps['currentUser']
       >
         <FaEye />
       </button>
-      
-    {currentUser?.permission === 'Owner' && (
+
+      {/* Disable edit/delete for self */}
+      {!isSelf && currentUser?.permission === 'Owner' && (
         <>
           <button 
             onClick={() => handleEdit(row)}
@@ -119,15 +135,20 @@ const userActions = (row: UserRow, currentUser: UserDropdownProps['currentUser']
       )}
     </>
   );
+};
+
 
   return (
+    
     <div>
-      <DataTable
-        columns={userColumns}
-        dataUrl="/api/admin/users"
-        actions={userActions}
-        currentUser={currentUser}
-      />
+     <DataTable
+  columns={userColumns}
+  dataUrl="/api/admin/users"
+  actions={userActions}
+  currentUser={currentUser}
+  refreshKey={refreshKey}
+/>
+
 
       {/* View User Modal */}
       <Modal
@@ -135,7 +156,9 @@ const userActions = (row: UserRow, currentUser: UserDropdownProps['currentUser']
         onClose={() => setIsViewModalOpen(false)}
         title="User Details"
       >
+        
         {selectedUser && (
+          
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               <img 

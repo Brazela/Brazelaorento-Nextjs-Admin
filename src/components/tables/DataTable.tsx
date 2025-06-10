@@ -11,13 +11,15 @@ interface DataTableProps {
   dataUrl: string;
   actions: (row: any, currentUser: any) => React.ReactNode;
   currentUser: any;
+    refreshKey?: number;
 }
 
 const DataTable: React.FC<DataTableProps> = ({ 
   columns, 
   dataUrl, 
   actions,
-  currentUser 
+  currentUser,
+   refreshKey = 0, // default 0
 }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,9 +34,13 @@ const DataTable: React.FC<DataTableProps> = ({
       const res = await fetch(
         `${dataUrl}?page=${currentPage}&limit=${limit}&search=${search}`
       );
-      const { users = [], products = [], total } = await res.json();
-      setData(users.length ? users : products);
-      setTotalPages(Math.ceil(total / limit));
+     const response = await res.json();
+const dataArray = response.products || response.users || [];
+const totalItems = response.total || 0;
+
+setData(dataArray);
+setTotalPages(Math.ceil(totalItems / limit));
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -42,6 +48,8 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   };
 
+
+  
   useEffect(() => {
     fetchData();
   }, [currentPage, limit, search]);
@@ -55,6 +63,11 @@ const DataTable: React.FC<DataTableProps> = ({
     setSearch(e.target.value);
     setCurrentPage(1);
   };
+
+  useEffect(() => {
+  fetchData();
+}, [currentPage, limit, search, refreshKey]); // add refreshKey here
+
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">

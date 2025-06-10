@@ -11,6 +11,7 @@ export const product = sqliteTable('product', {
   uploaded_date: text('uploaded_date').notNull().default(sql`CURRENT_DATE`),
   link: text('link').notNull(),
   button_name: text('button_name').notNull(),
+  
 });
 
 
