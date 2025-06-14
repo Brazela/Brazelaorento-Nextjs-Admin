@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     const signature = formData.get('signature') as string;
     const why = formData.get('why') as string;
     const blocksRaw = formData.get('blocks') as string;
-    let blocks: { type: 'text' | 'image'; value: string }[] = [];
+    let blocks: { type: 'text' | 'image' | 'button'; value: string; link?: string }[] = []; 
     try {
       blocks = JSON.parse(blocksRaw);
     } catch {}

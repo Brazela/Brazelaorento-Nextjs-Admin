@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
     icon: <TableIcon />,
     subItems: [{ name: "Users", path: "/users", pro: false },
      { name: "Products", path: "/products", pro: false },
+       { name: "Chats", path: "/chats", pro: false },
     ],
   },
   // {
@@ -258,13 +259,32 @@ const AppSidebar: React.FC<AppHeaderProps> = ({ user }) => {
   );
 const othersItems: NavItem[] = [];
 
+
+
 if (user && user.permission === "Owner") {
   othersItems.push({
     icon: <PlugInIcon />,
     name: "Send Email",
     path: "/admin/sendemail",
   });
+
 }
+
+  othersItems.push({
+    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75V19a2 2 0 002 2h3.75m6.5 0H19a2 2 0 002-2V9.75m-9.25 8.25v-6.5a2 2 0 012-2h2.5a2 2 0 012 2v6.5m-6.5 0h6.5" /></svg>,
+    name: "Homepage",
+    path: "https://main.brazelaorento.link",
+  });
+  othersItems.push({
+    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 14h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8s-9-3.582-9-8 4.03-8 9-8 9 3.582 9 8z" /></svg>,
+    name: "Live Chat",
+    path: "https://live-chat.brazelaorento.link",
+  });
+    othersItems.push({
+    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" /></svg>,
+    name: "Sign out",
+    path: "https://main.brazelaorento.link/logout",
+  });
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -330,6 +350,10 @@ if (user && user.permission === "Owner") {
     });
   };
 
+
+
+
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -357,8 +381,8 @@ if (user && user.permission === "Owner") {
                 className="dark:hidden"
                 src="/images/logo/logo.png"
                 alt="Logo"
-                width={32}
-                height={32}
+                  width={100}
+                height={20}
               />
               <Image
                 className="hidden dark:block"
@@ -416,7 +440,7 @@ if (user && user.permission === "Owner") {
             </div>
           </div>
         </nav>
-       
+ 
       </div>
       {/* <SendEmailModal isOpen={isSendEmailModalOpen} onClose={() => setIsSendEmailModalOpen(false)} /> */}
       <SendEmailModal isOpen={isSendEmailModalOpen} onClose={() => setIsSendEmailModalOpen(false)} />

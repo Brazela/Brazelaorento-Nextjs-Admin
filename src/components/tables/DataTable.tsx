@@ -29,6 +29,7 @@ const DataTable: React.FC<DataTableProps> = ({
   const [totalPages, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(5);
   const [search, setSearch] = useState('');
+  const [totalItems, setTotalItems] = useState(0);
 
   const fetchData = async () => {
     setLoading(true);
@@ -37,10 +38,15 @@ const DataTable: React.FC<DataTableProps> = ({
         `${dataUrl}?page=${currentPage}&limit=${limit}&search=${search}`
       );
       const response = await res.json();
-      const dataArray = response.products || response.users || [];
+      const dataArray = 
+        response.products || 
+        response.users || 
+        response.chats ||
+        [];
       const totalItems = response.total || 0;
       setData(dataArray);
-      setTotalPages(Math.ceil(totalItems / limit));
+      setTotalItems(totalItems);
+      setTotalPages(Math.max(1, Math.ceil(totalItems / limit)));
       if (onDataChange) onDataChange(dataArray); // Notify parent
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -161,7 +167,7 @@ const DataTable: React.FC<DataTableProps> = ({
 
       <div className="flex items-center justify-between p-4">
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          Showing {data.length} of {totalPages * limit} entries
+          Showing {data.length} of {totalItems} entries
         </div>
         <Pagination
           currentPage={currentPage}

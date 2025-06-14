@@ -3,10 +3,11 @@ import { Modal } from "../modals";
 import Button from "../buttons";
 
 interface EmailBlock {
-  type: "text" | "image";
+  type: "text" | "image" | "button";
   value: string;
   file?: File | null;
   preview?: string;
+  link?: string;
 }
 
 interface SendEmailModalProps {
@@ -36,12 +37,20 @@ const SendEmailModal: React.FC<SendEmailModalProps> = ({ isOpen, onClose }) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleAddBlock = (type: "text" | "image") => {
-    setBlocks([...blocks, { type, value: "", file: null, preview: "" }]);
+  const handleAddBlock = (type: "text" | "image" | "button") => {
+    if (type === "button") {
+      setBlocks([...blocks, { type, value: "", link: "" }]);
+    } else {
+      setBlocks([...blocks, { type, value: "", file: null, preview: "" }]);
+    }
   };
 
   const handleBlockChange = (idx: number, value: string) => {
     setBlocks(blocks.map((b, i) => (i === idx ? { ...b, value } : b)));
+  };
+
+  const handleButtonLinkChange = (idx: number, link: string) => {
+    setBlocks(blocks.map((b, i) => (i === idx ? { ...b, link } : b)));
   };
 
   const handleImageChange = (idx: number, file: File | null) => {
@@ -110,7 +119,16 @@ const SendEmailModal: React.FC<SendEmailModalProps> = ({ isOpen, onClose }) => {
     formData.append("closing", closing);
     formData.append("signature", signature);
     formData.append("why", why);
-    formData.append("blocks", JSON.stringify(blocks.map((b, i) => ({ type: b.type, value: b.type === "image" ? `__image_${i}__` : b.value }))));
+      formData.append("blocks", JSON.stringify(blocks.map((b, i) => {
+    if (b.type === "image") {
+      return { type: b.type, value: `__image_${i}__` };
+    } else if (b.type === "button") {
+      // Include both value and link for buttons
+      return { type: b.type, value: b.value, link: b.link };
+    } else {
+      return { type: b.type, value: b.value };
+    }
+  })));
     blocks.forEach((b, i) => {
       if (b.type === "image" && b.file) {
         formData.append(`image_${i}`, b.file);
@@ -163,15 +181,13 @@ const SendEmailModal: React.FC<SendEmailModalProps> = ({ isOpen, onClose }) => {
             {blocks.map((block, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 {block.type === "text" ? (
-                  <>
-                    <textarea
-                      className="w-full rounded border px-3 py-2 text-cyan-500"
-                      value={block.value}
-                      onChange={e => handleBlockChange(idx, e.target.value)}
-                      placeholder="Text content"
-                    />
-                  </>
-                ) : (
+                  <textarea
+                    className="w-full rounded border px-3 py-2 text-cyan-500"
+                    value={block.value}
+                    onChange={e => handleBlockChange(idx, e.target.value)}
+                    placeholder="Text content"
+                  />
+                ) : block.type === "image" ? (
                   <>
                     <input
                       type="file"
@@ -184,7 +200,22 @@ const SendEmailModal: React.FC<SendEmailModalProps> = ({ isOpen, onClose }) => {
                       <img src={block.preview} alt="Preview" className="w-16 h-16 object-contain border rounded" />
                     )}
                   </>
-                )}
+                ) : block.type === "button" ? (
+                  <div className="flex flex-col gap-1 w-full">
+                    <input
+                      className="w-full rounded border px-3 py-2 text-cyan-500"
+                      value={block.value}
+                      onChange={e => handleBlockChange(idx, e.target.value)}
+                      placeholder="Button text"
+                    />
+                    <input
+                      className="w-full rounded border px-3 py-2 text-cyan-500"
+                      value={block.link}
+                      onChange={e => handleButtonLinkChange(idx, e.target.value)}
+                      placeholder="Button link (https://...)"
+                    />
+                  </div>
+                ) : null}
                 <button type="button" className="text-red-500 ml-2" onClick={() => handleRemoveBlock(idx)}>
                   Remove
                 </button>
@@ -194,6 +225,7 @@ const SendEmailModal: React.FC<SendEmailModalProps> = ({ isOpen, onClose }) => {
             <div className="flex gap-2 mt-2">
               <Button type="button" variant="secondary" onClick={() => handleAddBlock("text")}>+ Text</Button>
               <Button type="button" variant="secondary" onClick={() => handleAddBlock("image")}>+ Image</Button>
+              <Button type="button" variant="secondary" onClick={() => handleAddBlock("button")}>+ Button</Button>
             </div>
           </div>
         </div>

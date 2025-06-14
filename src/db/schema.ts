@@ -11,9 +11,7 @@ export const product = sqliteTable('product', {
   uploaded_date: text('uploaded_date').notNull().default(sql`CURRENT_DATE`),
   link: text('link').notNull(),
   button_name: text('button_name').notNull(),
-  
 });
-
 
 export const usersTable = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -24,14 +22,10 @@ export const usersTable = sqliteTable('users', {
   verificationCode: text('verification_code').default('111111'),
   verificationCodeGeneratedAt: integer('verification_code_generated_at', { mode: 'timestamp' }),
 
-  // verified: integer('verified', { mode: 'boolean' }).default(false),
-
-  // New fields based on ALTER TABLEs:
   profilePicture: text('profile_picture').notNull().default(''),
   resetPassCode: text('resetpass_code').default('333333'),
   resetPassCodeGeneratedAt: integer('resetpass_code_generated_at', { mode: 'timestamp' }),
   permission: text('permission').notNull().default('Guest'),
-
 }, (table) => ({
   emailIdx: uniqueIndex('email_idx').on(table.email),
   usernameIdx: uniqueIndex('username_idx').on(table.username),
@@ -43,7 +37,18 @@ export const sessions = sqliteTable('sessions', {
   createdAt: integer('created_at').default(sql`(strftime('%s', 'now'))`).notNull(),
 });
 
+export const chats = sqliteTable('chats', {
+  chat_id: integer('chat_id').primaryKey({ autoIncrement: true }),
+  chat_link: text('chat_link').notNull(),
+  requester: text('requester').notNull(),
+  helper: text('helper'),
+  generated_on: integer('generated_on', { mode: 'timestamp' }).default(sql`(strftime('%s', 'now'))`).notNull(),
+  chat_status: integer('chat_status').notNull().default(1),
+});
+
 export type InsertUser = typeof usersTable.$inferInsert;
 export type SelectUser = typeof usersTable.$inferSelect;
 export type InsertProduct = typeof product.$inferInsert;
 export type SelectProduct = typeof product.$inferSelect;
+export type InsertChat = typeof chats.$inferInsert;
+export type SelectChat = typeof chats.$inferSelect;

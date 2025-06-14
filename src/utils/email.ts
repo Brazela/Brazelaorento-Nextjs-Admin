@@ -25,7 +25,7 @@ export async function sendCustomEmail({
   closing: string;
   signature: string;
   why: string;
-  blocks: { type: 'text' | 'image'; value: string }[];
+  blocks: { type: 'text' | 'image' | 'button'; value: string; link?: string }[];
   formData: FormData;
 }) {
   // Build HTML content
@@ -55,6 +55,17 @@ export async function sendCustomEmail({
         contentHtml += `
           <div style="margin-bottom: 20px; text-align: center;">
             <img src="${result.secure_url}" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;"/>
+          </div>
+        `;
+      }
+    } else if (block.type === 'button') {
+      // Render a styled button with link
+      if (block.value && block.link) {
+        contentHtml += `
+          <div style="margin: 24px 0; text-align: center;">
+            <a href="${block.link}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 24px; font-size: 15px; color: #fff; text-decoration: none; background-color: #4299e1; border-radius: 6px; text-align: center; font-weight: 600; transition: background-color 0.2s;">
+              ${block.value}
+            </a>
           </div>
         `;
       }
