@@ -292,7 +292,12 @@ const productActions = (row: ProductRow, currentUser: UserDropdownProps['current
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-        <div></div>
+        <Button
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700 focus:outline-none"
+        >
+          + Add Product
+        </Button>
         <div className="relative w-full sm:w-auto flex justify-start" ref={downloadRef}>
           <button
             className="flex items-center w-full sm:w-auto px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 focus:outline-none justify-center"
