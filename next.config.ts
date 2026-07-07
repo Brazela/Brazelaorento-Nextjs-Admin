@@ -1,19 +1,19 @@
 import type { NextConfig } from "next";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-  /* config options here */
-   devIndicators: false,
-    images: {
+  devIndicators: false,
+  images: {
     unoptimized: true,
   },
-  webpack(config) {
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ["@svgr/webpack"],
-    });
-    return config;
+  // This replaces the old webpack block for Next.js 16+
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
   },
 };
 
