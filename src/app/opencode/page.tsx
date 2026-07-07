@@ -1,8 +1,12 @@
 import React from 'react';
 
 export default function OpenCodeWorkspace() {
-  // Use the exact working root URL without a trailing slash
-  const hfSpaceUrl = "https://oliverch-my-opencode-agent.hf.space";
+  // 1. Define your secure credentials matching your Hugging Face secrets
+  const username = "opencode"; // Or your custom OPENCODE_SERVER_USERNAME
+  const password = "Kingisr912312."; // Your exact OPENCODE_SERVER_PASSWORD
+
+  // 2. Format the URL to inject basic authentication natively
+  const hfSpaceUrl = `https://${username}:${password}@oliverch-my-opencode-agent.hf.space?__theme=dark`;
 
   return (
     <div style={{
@@ -38,7 +42,6 @@ export default function OpenCodeWorkspace() {
             height: '100%',
             border: 'none',
           }}
-          // Ensures the session doesn't fail due to origin token blocks
           allow="clipboard-read; clipboard-write; cross-origin-isolated"
           sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
         />
