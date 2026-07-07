@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const HF_SPACE_BASE = 'https://oliverch-my-opencode-agent2.hf.space';
 
-export async function GET(
+async function proxyHandler(
   req: NextRequest,
   { params }: { params: Promise<{ path?: string[] }> },
 ) {
@@ -16,13 +16,25 @@ export async function GET(
 
   const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 
+  // Forward method and body for POST/PUT etc.
+  const init: RequestInit & { duplex?: string } = {
+    method: req.method,
+    headers: {
+      Authorization: authHeader,
+    },
+  };
+
+  // Only forward body for methods that support it
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    const body = await req.arrayBuffer();
+    if (body.byteLength > 0) {
+      init.body = body;
+      init.duplex = 'half';
+    }
+  }
+
   try {
-    const response = await fetch(targetUrl, {
-      headers: {
-        Authorization: authHeader,
-        'User-Agent': req.headers.get('user-agent') || 'NextJS-Proxy',
-      },
-    });
+    const response = await fetch(targetUrl, init);
 
     const body = await response.arrayBuffer();
     let contentType = response.headers.get('content-type') || '';
@@ -31,7 +43,6 @@ export async function GET(
     let buffer = Buffer.from(body);
     if (contentType.includes('text/html')) {
       let html = new TextDecoder().decode(body);
-      // Rewrite the HF space base URL to the proxy path
       html = html.replace(
         new RegExp(HF_SPACE_BASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
         '/api/proxy/opencode',
@@ -52,3 +63,9 @@ export async function GET(
     return new NextResponse('Proxy Error', { status: 502 });
   }
 }
+
+export const GET = proxyHandler;
+export const POST = proxyHandler;
+export const PUT = proxyHandler;
+export const PATCH = proxyHandler;
+export const DELETE = proxyHandler;
