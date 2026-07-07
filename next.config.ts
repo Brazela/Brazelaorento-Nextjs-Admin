@@ -8,9 +8,6 @@ const nextConfig: NextConfig = {
     images: {
     unoptimized: true,
   },
-   eslint: {
-    ignoreDuringBuilds: true, // ✅ Disable ESLint during `next build`
-  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
