@@ -6,7 +6,7 @@ export default function OpenCodeWorkspace() {
   const password = "Kingisr912312."; // Your exact OPENCODE_SERVER_PASSWORD
 
   // 2. Format the URL to inject basic authentication natively
-  const hfSpaceUrl = `https:/oliverch-my-opencode-agent2.hf.space`;
+  const hfSpaceUrl = `https://${username}:${password}@oliverch-my-opencode-agent2.hf.space?__theme=dark`;
 
   return (
     <div style={{
