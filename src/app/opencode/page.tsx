@@ -1,12 +1,8 @@
 import React from 'react';
 
 export default function OpenCodeWorkspace() {
-  // 1. Define your secure credentials matching your Hugging Face secrets
-  const username = "opencode"; // Or your custom OPENCODE_SERVER_USERNAME
-  const password = "Kingisr912312."; // Your exact OPENCODE_SERVER_PASSWORD
-
-  // 2. Format the URL to inject basic authentication natively
-  const hfSpaceUrl = `https://${username}:${password}@oliverch-my-opencode-agent2.hf.space?__theme=dark`;
+  // Proxy URL — credentials are injected server-side via the API route
+  const hfSpaceUrl = '/api/proxy/opencode?__theme=dark';
 
   return (
     <div style={{
