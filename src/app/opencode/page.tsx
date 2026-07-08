@@ -5,7 +5,7 @@ export default function OpenCodeWorkspace() {
   // Replace this with your actual direct Hugging Face subdomain URL
 
   // Use the exact working root URL without a trailing slash
-  const hfSpaceUrl = "https://oliverch-my-opencode-agent.hf.space";
+  const hfSpaceUrl = "https://oliverch-my-opencode-agent2.hf.space";
 
   return (
     <div style={{
