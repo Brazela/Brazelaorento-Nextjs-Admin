@@ -8,20 +8,35 @@ async function proxyHandler(
   { params }: { params: Promise<{ path?: string[] }> },
 ) {
   const { path } = await params;
-  const username = process.env.OPENCODE_SERVER_USERNAME || 'opencode';
-  const password = process.env.OPENCODE_SERVER_PASSWORD || '';
 
   const targetPath = path ? path.join('/') : '';
-  const queryString = req.nextUrl.searchParams.toString();
-  const targetUrl = `${HF_SPACE_BASE}/${targetPath}${queryString ? `?${queryString}` : ''}`;
 
-  const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+  // ── Auth resolution ──────────────────────────────────────────────
+  // Priority: 1) Authorization header from client fetch override
+  //           2) __auth query param (from login form)
+  //           3) env vars (fallback)
+  let rawAuth = req.headers.get('authorization') || '';
+  const queryAuth = req.nextUrl.searchParams.get('__auth');
+  if (!rawAuth && queryAuth) {
+    rawAuth = `Basic ${queryAuth}`;
+  }
+  if (!rawAuth) {
+    const u = process.env.OPENCODE_SERVER_USERNAME || 'opencode';
+    const p = process.env.OPENCODE_SERVER_PASSWORD || '';
+    rawAuth = `Basic ${Buffer.from(`${u}:${p}`).toString('base64')}`;
+  }
+  const REQUEST_AUTH = rawAuth; // used by fetch-override injection below
+
+  // Strip our internal __auth param from the forwarded query string
+  const fwdParams = new URLSearchParams(req.nextUrl.searchParams);
+  fwdParams.delete('__auth');
+  const queryString = fwdParams.toString();
+  const targetUrl = `${HF_SPACE_BASE}/${targetPath}${queryString ? `?${queryString}` : ''}`;
 
   const init: RequestInit & { duplex?: string } = {
     method: req.method,
     headers: {
-      Authorization: authHeader,
-      // forward accept header so the origin returns the right content type
+      Authorization: rawAuth,
       Accept: req.headers.get('accept') || '*/*',
     },
   };
@@ -68,43 +83,67 @@ async function proxyHandler(
 
       // Inject a fetch/XHR/EventSource override so runtime API calls from OpenCode's
       // client-side JS also go through the proxy instead of hitting Next.js directly.
+      // Also attaches the auth token to every request.
+      const AUTH_B64 = REQUEST_AUTH.replace(/^Basic\s+/i, '');
       const fetchOverride = `<script>
 (function() {
-  const PROXY = '${PROXY_PREFIX}/';
+  var AUTH = '${AUTH_B64}';
+  var PROXY = '${PROXY_PREFIX}/';
   var origin = window.location.origin;
   function proxyUrl(url) {
     if (typeof url !== 'string') return url;
-    // Root-relative: /provider → /api/proxy/opencode/provider
     if (url.startsWith('/') && !url.startsWith(PROXY) && !url.startsWith('/_next/')) {
       return PROXY + url.slice(1);
     }
-    // Absolute matching our origin: https://admin.brazelaorento.link/provider → proxy
     if (url.startsWith(origin + '/') && !url.startsWith(origin + PROXY)) {
       return origin + PROXY + url.slice(origin.length + 1);
     }
     return url;
   }
+  function addAuth(opts) {
+    opts = opts || {};
+    opts.headers = opts.headers || {};
+    if (typeof opts.headers.append === 'function') {
+      opts.headers.append('Authorization', 'Basic ' + AUTH);
+    } else {
+      opts.headers['Authorization'] = 'Basic ' + AUTH;
+    }
+    return opts;
+  }
+  // fetch
   var origFetch = window.fetch.bind(window);
-  window.fetch = function(url, opts) { return origFetch(proxyUrl(url), opts); };
+  window.fetch = function(url, opts) {
+    return origFetch(proxyUrl(url), addAuth(opts));
+  };
+  // XMLHttpRequest
   var origXHR = window.XMLHttpRequest;
   if (origXHR) {
     var XHRProxy = function() {
       var xhr = new origXHR();
       var origOpen = xhr.open.bind(xhr);
-      xhr.open = function(m, url) { return origOpen(m, proxyUrl(url)); };
+      xhr.open = function(m, url) {
+        url = proxyUrl(url);
+        origOpen(m, url);
+        xhr.setRequestHeader('Authorization', 'Basic ' + AUTH);
+        return xhr;
+      };
       return xhr;
     };
     XHRProxy.prototype = origXHR.prototype;
     window.XMLHttpRequest = XHRProxy;
   }
-  // EventSource for SSE streams (like /global/event)
+  // EventSource (SSE) — native EventSource doesn't support custom headers,
+  // so we append auth as a query param that the proxy understands.
   var origES = window.EventSource;
   if (origES) {
-    var ESProxy = function(url, opts) {
-      return new origES(proxyUrl(url), opts);
+    window.EventSource = function(url, opts) {
+      url = proxyUrl(url);
+      if (typeof url === 'string') {
+        url += (url.indexOf('?') > -1 ? '&' : '?') + '__auth=' + encodeURIComponent(AUTH);
+      }
+      return new origES(url, opts);
     };
-    ESProxy.prototype = origES.prototype;
-    window.EventSource = ESProxy;
+    window.EventSource.prototype = origES.prototype;
   }
 })();
 <\/script>`;

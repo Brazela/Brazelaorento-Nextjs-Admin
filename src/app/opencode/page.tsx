@@ -1,8 +1,171 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+
+const STORAGE_KEY = 'opencode_auth';
 
 export default function OpenCodeWorkspace() {
-  // Proxy URL — credentials are injected server-side via the API route
-  const hfSpaceUrl = '/api/proxy/opencode?__theme=dark';
+  const [authB64, setAuthB64] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // On mount, restore saved auth (if any)
+  useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      setAuthB64(saved);
+    }
+  }, []);
+
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Both username and password are required.');
+      return;
+    }
+    setError('');
+    const encoded = btoa(`${username}:${password}`);
+    sessionStorage.setItem(STORAGE_KEY, encoded);
+    setAuthB64(encoded);
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem(STORAGE_KEY);
+    setAuthB64('');
+    setUsername('');
+    setPassword('');
+  }
+
+  // If no auth saved, show login form
+  if (!authB64) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0d0d0d',
+        padding: '20px',
+        boxSizing: 'border-box',
+      }}>
+        <form onSubmit={handleLogin} style={{
+          backgroundColor: '#1a1a1a',
+          border: '1px solid #333',
+          borderRadius: '12px',
+          padding: '40px',
+          width: '100%',
+          maxWidth: '400px',
+          fontFamily: 'sans-serif',
+        }}>
+          <h1 style={{
+            margin: '0 0 8px 0',
+            fontSize: '1.5rem',
+            color: '#fff',
+            textAlign: 'center',
+          }}>
+            🔐 OpenCode Login
+          </h1>
+          <p style={{
+            margin: '0 0 24px 0',
+            fontSize: '0.85rem',
+            color: '#888',
+            textAlign: 'center',
+          }}>
+            Enter your OpenCode server credentials
+          </p>
+
+          {error && (
+            <div style={{
+              backgroundColor: '#3a1212',
+              color: '#ff6b6b',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              marginBottom: '16px',
+              fontSize: '0.85rem',
+            }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
+              color: '#ccc',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+            }}>
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="opencode"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: '1px solid #444',
+                backgroundColor: '#111',
+                color: '#fff',
+                fontSize: '0.95rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
+              color: '#ccc',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '6px',
+                border: '1px solid #444',
+                backgroundColor: '#111',
+                color: '#fff',
+                fontSize: '0.95rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <button type="submit" style={{
+            width: '100%',
+            padding: '12px',
+            borderRadius: '6px',
+            border: 'none',
+            backgroundColor: '#3b82f6',
+            color: '#fff',
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}>
+            Connect
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // Authenticated — show the iframe
+  const iframeSrc = `/api/proxy/opencode?__theme=dark&__auth=${encodeURIComponent(authB64)}`;
 
   return (
     <div style={{
@@ -12,10 +175,28 @@ export default function OpenCodeWorkspace() {
       flexDirection: 'column',
       backgroundColor: '#111',
       padding: '20px',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
     }}>
-      <div style={{ marginBottom: '15px', color: '#fff', fontFamily: 'sans-serif' }}>
-        <h1 style={{ margin: '0 0 5px 0', fontSize: '1.5rem' }}>💻 AI Agent Workspace</h1>
+      <div style={{
+        marginBottom: '15px',
+        color: '#fff',
+        fontFamily: 'sans-serif',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <h1 style={{ margin: '0', fontSize: '1.5rem' }}>💻 AI Agent Workspace</h1>
+        <button onClick={handleLogout} style={{
+          padding: '6px 16px',
+          borderRadius: '6px',
+          border: '1px solid #555',
+          backgroundColor: 'transparent',
+          color: '#ccc',
+          fontSize: '0.85rem',
+          cursor: 'pointer',
+        }}>
+          Logout
+        </button>
       </div>
 
       <div style={{
@@ -25,10 +206,10 @@ export default function OpenCodeWorkspace() {
         borderRadius: '8px',
         overflow: 'hidden',
         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-        border: '1px solid #333'
+        border: '1px solid #333',
       }}>
         <iframe
-          src={hfSpaceUrl}
+          src={iframeSrc}
           title="OpenCode AI Space Portal"
           style={{
             position: 'absolute',
