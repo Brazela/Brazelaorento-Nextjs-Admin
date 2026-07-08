@@ -3,12 +3,9 @@ import React from 'react';
 
 export default function OpenCodeWorkspace() {
   // Replace this with your actual direct Hugging Face subdomain URL
-// 1. Define your secure credentials matching your Hugging Face secrets
-  const username = "opencode"; // Or your custom OPENCODE_SERVER_USERNAME
-  const password = "Kingisr912312."; // Your exact OPENCODE_SERVER_PASSWORD
 
-  // 2. Format the URL to inject basic authentication natively
-  const hfSpaceUrl = `https://${username}:${password}@oliverch-my-opencode-agent2.hf.space?__theme=dark`;
+  // Use the exact working root URL without a trailing slash
+  const hfSpaceUrl = "https://oliverch-my-opencode-agent2.hf.space";
 
   return (
     <div style={{
