@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const HF_SPACE_BASE = 'https://oliverch-my-opencode-agent2.hf.space';
+const PROXY_PREFIX = '/api/proxy/opencode';
 
 async function proxyHandler(
   req: NextRequest,
@@ -16,15 +17,15 @@ async function proxyHandler(
 
   const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 
-  // Forward method and body for POST/PUT etc.
   const init: RequestInit & { duplex?: string } = {
     method: req.method,
     headers: {
       Authorization: authHeader,
+      // forward accept header so the origin returns the right content type
+      Accept: req.headers.get('accept') || '*/*',
     },
   };
 
-  // Only forward body for methods that support it
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
     const body = await req.arrayBuffer();
     if (body.byteLength > 0) {
@@ -35,28 +36,57 @@ async function proxyHandler(
 
   try {
     const response = await fetch(targetUrl, init);
+    const rawBody = await response.arrayBuffer();
+    const contentType = response.headers.get('content-type') || '';
 
-    const body = await response.arrayBuffer();
-    let contentType = response.headers.get('content-type') || '';
+    let buffer = Buffer.from(rawBody);
 
-    // Rewrite absolute URLs in HTML responses so assets point back to the proxy
-    let buffer = Buffer.from(body);
+    // Rewrite HTML: fix absolute paths + inject <base> tag
     if (contentType.includes('text/html')) {
-      let html = new TextDecoder().decode(body);
+      let html = new TextDecoder().decode(rawBody);
+
+      // Replace any full HF space URLs
       html = html.replace(
         new RegExp(HF_SPACE_BASE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-        '/api/proxy/opencode',
+        PROXY_PREFIX,
       );
+
+      // Rewrite root-relative asset paths: src="/assets/..." href="/..."
+      // but skip ones that already point at our proxy
+      html = html.replace(
+        /(src|href)="\/(?!api\/proxy\/opencode)([^"]*)"/g,
+        `$1="${PROXY_PREFIX}/$2"`,
+      );
+
+      // Inject a <base> tag as a fallback for any JS-driven relative fetches
+      if (!html.includes('<base ')) {
+        html = html.replace(
+          /<head>/i,
+          `<head><base href="${PROXY_PREFIX}/">`,
+        );
+      }
+
       buffer = Buffer.from(html);
     }
+
+    // Rewrite CSS: fix url(/assets/...) references
+    if (contentType.includes('text/css')) {
+      let css = new TextDecoder().decode(rawBody);
+      css = css.replace(
+        /url\(\/(?!api\/proxy\/opencode)/g,
+        `url(${PROXY_PREFIX}/`,
+      );
+      buffer = Buffer.from(css);
+    }
+
+    const headers = new Headers();
+    headers.set('Content-Type', contentType);
+    headers.set('Cache-Control', 'no-cache');
 
     return new NextResponse(buffer, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache',
-      },
+      headers,
     });
   } catch (error) {
     console.error('Proxy error:', error);
