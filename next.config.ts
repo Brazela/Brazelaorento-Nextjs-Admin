@@ -15,6 +15,20 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async rewrites() {
+    return [
+      // Catch OpenCode API routes that the client-side JS fetches at runtime
+      // and proxy them to the Hugging Face Space.
+      {
+        source: '/:path(provider|path|project)/:rest*',
+        destination: '/api/proxy/opencode/:path/:rest*',
+      },
+      {
+        source: '/global/:path*',
+        destination: '/api/proxy/opencode/global/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
